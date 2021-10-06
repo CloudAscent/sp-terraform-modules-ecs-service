@@ -1,6 +1,6 @@
 resource "aws_ecs_task_definition" "default" {
   count                    = var.enabled ? 1 : 0
-  family                   = module.default_label.id
+  family                   = module.default_"${var.project}-${var.application}-${var.environment}"
   container_definitions    = var.container_definition_json
   requires_compatibilities = [var.launch_type]
   network_mode             = var.network_mode
@@ -62,7 +62,7 @@ resource "aws_ecs_task_definition" "default" {
     }
   }
 
-  tags = var.use_old_arn ? null : module.default_label.tags
+  tags = var.use_old_arn ? null : var.tags
 }
 
 # IAM
@@ -83,10 +83,10 @@ data "aws_iam_policy_document" "ecs_task" {
 resource "aws_iam_role" "ecs_task" {
   count = var.enabled && length(var.task_role_arn) == 0 ? 1 : 0
 
-  name                 = module.task_label.id
+  name                 = "${var.project}-${var.application}-${var.environment}"
   assume_role_policy   = join("", data.aws_iam_policy_document.ecs_task.*.json)
   permissions_boundary = var.permissions_boundary == "" ? null : var.permissions_boundary
-  tags                 = module.task_label.tags
+  tags                 = var.tags
 }
 
 data "aws_iam_policy_document" "ecs_service" {
@@ -105,7 +105,7 @@ data "aws_iam_policy_document" "ecs_service" {
 
 resource "aws_iam_role" "ecs_service" {
   count                = var.enabled && var.network_mode != "awsvpc" && length(var.task_role_arn) == 0 && length(var.task_exec_role_arn) == 0 ? 1 : 0
-  name                 = module.service_label.id
+  name                 = module.service_"${var.project}-${var.application}-${var.environment}"
   assume_role_policy   = join("", data.aws_iam_policy_document.ecs_service.*.json)
   permissions_boundary = var.permissions_boundary == "" ? null : var.permissions_boundary
   tags                 = module.service_label.tags
@@ -132,7 +132,7 @@ data "aws_iam_policy_document" "ecs_service_policy" {
 
 resource "aws_iam_role_policy" "ecs_service" {
   count  = var.enabled && length(var.task_role_arn) == 0 && length(var.task_exec_role_arn) == 0 && var.network_mode != "awsvpc" ? 1 : 0
-  name   = module.service_label.id
+  name   = module.service_"${var.project}-${var.application}-${var.environment}"
   policy = join("", data.aws_iam_policy_document.ecs_service_policy.*.json)
   role   = join("", aws_iam_role.ecs_service.*.id)
 }
@@ -153,7 +153,7 @@ data "aws_iam_policy_document" "ecs_task_exec" {
 
 resource "aws_iam_role" "ecs_exec" {
   count                = var.enabled && length(var.task_exec_role_arn) == 0 ? 1 : 0
-  name                 = module.exec_label.id
+  name                 = module.exec_"${var.project}-${var.application}-${var.environment}"
   assume_role_policy   = join("", data.aws_iam_policy_document.ecs_task_exec.*.json)
   permissions_boundary = var.permissions_boundary == "" ? null : var.permissions_boundary
   tags                 = module.exec_label.tags
@@ -181,7 +181,7 @@ data "aws_iam_policy_document" "ecs_exec" {
 
 resource "aws_iam_role_policy" "ecs_exec" {
   count  = var.enabled && length(var.task_exec_role_arn) == 0 ? 1 : 0
-  name   = module.exec_label.id
+  name   = module.exec_"${var.project}-${var.application}-${var.environment}"
   policy = join("", data.aws_iam_policy_document.ecs_exec.*.json)
   role   = join("", aws_iam_role.ecs_exec.*.id)
 }
@@ -191,7 +191,7 @@ resource "aws_iam_role_policy" "ecs_exec" {
 resource "aws_security_group" "ecs_service" {
   count       = var.enabled && var.enable_lb && var.enable_security_group ? 1 : 0
   vpc_id      = var.vpc_id
-  name        = module.service_label.id
+  name        = module.service_"${var.project}-${var.application}-${var.environment}"
   description = "Allow ALL egress from ECS service"
   tags        = module.service_label.tags
 }
@@ -298,7 +298,7 @@ resource "aws_ecs_service" "default" {
 
   cluster        = var.ecs_cluster_arn
   propagate_tags = var.propagate_tags
-  tags           = var.use_old_arn ? null : module.default_label.tags
+  tags           = var.use_old_arn ? null : var.tags
 
   deployment_controller {
     type = var.deployment_controller_type
