@@ -108,7 +108,7 @@ resource "aws_iam_role" "ecs_service" {
   name                 = "${var.project}-${var.application}-${var.environment}"
   assume_role_policy   = join("", data.aws_iam_policy_document.ecs_service.*.json)
   permissions_boundary = var.permissions_boundary == "" ? null : var.permissions_boundary
-  tags                 = label.tags
+  tags                 = var.tags
 }
 
 data "aws_iam_policy_document" "ecs_service_policy" {
@@ -156,7 +156,7 @@ resource "aws_iam_role" "ecs_exec" {
   name                 = "${var.project}-${var.application}-${var.environment}"
   assume_role_policy   = join("", data.aws_iam_policy_document.ecs_task_exec.*.json)
   permissions_boundary = var.permissions_boundary == "" ? null : var.permissions_boundary
-  tags                 = label.tags
+  tags                 = var.tags
 }
 
 data "aws_iam_policy_document" "ecs_exec" {
@@ -193,7 +193,7 @@ resource "aws_security_group" "ecs_service" {
   vpc_id      = var.vpc_id
   name        = "${var.project}-${var.application}-${var.environment}"
   description = "Allow ALL egress from ECS service"
-  tags        = label.tags
+  tags        = var.tags
 }
 
 resource "aws_security_group_rule" "allow_all_egress" {
