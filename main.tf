@@ -239,7 +239,7 @@ resource "aws_security_group_rule" "nlb" {
 
 resource "aws_ecs_service" "default" {
   count                              = var.enabled ? 1 : 0
-  name                               = label.application
+  name                               = var.application
   task_definition                    = "${join("", aws_ecs_task_definition.default.*.family)}:${join("", aws_ecs_task_definition.default.*.revision)}"
   desired_count                      = var.desired_count
   deployment_maximum_percent         = var.deployment_maximum_percent
