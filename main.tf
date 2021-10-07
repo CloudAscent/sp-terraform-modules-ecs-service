@@ -1,6 +1,6 @@
 resource "aws_ecs_task_definition" "default" {
   count                    = var.enabled ? 1 : 0
-  family                   = module.default_"${var.project}-${var.application}-${var.environment}"
+  family                   = "${var.project}-${var.application}-${var.environment}"
   container_definitions    = var.container_definition_json
   requires_compatibilities = [var.launch_type]
   network_mode             = var.network_mode
@@ -105,10 +105,10 @@ data "aws_iam_policy_document" "ecs_service" {
 
 resource "aws_iam_role" "ecs_service" {
   count                = var.enabled && var.network_mode != "awsvpc" && length(var.task_role_arn) == 0 && length(var.task_exec_role_arn) == 0 ? 1 : 0
-  name                 = module.service_"${var.project}-${var.application}-${var.environment}"
+  name                 = "${var.project}-${var.application}-${var.environment}"
   assume_role_policy   = join("", data.aws_iam_policy_document.ecs_service.*.json)
   permissions_boundary = var.permissions_boundary == "" ? null : var.permissions_boundary
-  tags                 = module.service_label.tags
+  tags                 = label.tags
 }
 
 data "aws_iam_policy_document" "ecs_service_policy" {
@@ -132,7 +132,7 @@ data "aws_iam_policy_document" "ecs_service_policy" {
 
 resource "aws_iam_role_policy" "ecs_service" {
   count  = var.enabled && length(var.task_role_arn) == 0 && length(var.task_exec_role_arn) == 0 && var.network_mode != "awsvpc" ? 1 : 0
-  name   = module.service_"${var.project}-${var.application}-${var.environment}"
+  name   = "${var.project}-${var.application}-${var.environment}"
   policy = join("", data.aws_iam_policy_document.ecs_service_policy.*.json)
   role   = join("", aws_iam_role.ecs_service.*.id)
 }
@@ -153,10 +153,10 @@ data "aws_iam_policy_document" "ecs_task_exec" {
 
 resource "aws_iam_role" "ecs_exec" {
   count                = var.enabled && length(var.task_exec_role_arn) == 0 ? 1 : 0
-  name                 = module.exec_"${var.project}-${var.application}-${var.environment}"
+  name                 = "${var.project}-${var.application}-${var.environment}"
   assume_role_policy   = join("", data.aws_iam_policy_document.ecs_task_exec.*.json)
   permissions_boundary = var.permissions_boundary == "" ? null : var.permissions_boundary
-  tags                 = module.exec_label.tags
+  tags                 = label.tags
 }
 
 data "aws_iam_policy_document" "ecs_exec" {
@@ -181,7 +181,7 @@ data "aws_iam_policy_document" "ecs_exec" {
 
 resource "aws_iam_role_policy" "ecs_exec" {
   count  = var.enabled && length(var.task_exec_role_arn) == 0 ? 1 : 0
-  name   = module.exec_"${var.project}-${var.application}-${var.environment}"
+  name   = "${var.project}-${var.application}-${var.environment}"
   policy = join("", data.aws_iam_policy_document.ecs_exec.*.json)
   role   = join("", aws_iam_role.ecs_exec.*.id)
 }
@@ -191,9 +191,9 @@ resource "aws_iam_role_policy" "ecs_exec" {
 resource "aws_security_group" "ecs_service" {
   count       = var.enabled && var.enable_lb && var.enable_security_group ? 1 : 0
   vpc_id      = var.vpc_id
-  name        = module.service_"${var.project}-${var.application}-${var.environment}"
+  name        = "${var.project}-${var.application}-${var.environment}"
   description = "Allow ALL egress from ECS service"
-  tags        = module.service_label.tags
+  tags        = label.tags
 }
 
 resource "aws_security_group_rule" "allow_all_egress" {
@@ -239,7 +239,7 @@ resource "aws_security_group_rule" "nlb" {
 
 resource "aws_ecs_service" "default" {
   count                              = var.enabled ? 1 : 0
-  name                               = module.default_label.application
+  name                               = label.application
   task_definition                    = "${join("", aws_ecs_task_definition.default.*.family)}:${join("", aws_ecs_task_definition.default.*.revision)}"
   desired_count                      = var.desired_count
   deployment_maximum_percent         = var.deployment_maximum_percent
