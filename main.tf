@@ -83,7 +83,7 @@ data "aws_iam_policy_document" "ecs_task" {
 resource "aws_iam_role" "ecs_task" {
   count = var.enabled && length(var.task_role_arn) == 0 ? 1 : 0
 
-  name                 = "${var.project}-${var.application}-${var.environment}"
+  name                 = "${var.project}-${var.application}-${var.environment}-ecs_task"
   assume_role_policy   = join("", data.aws_iam_policy_document.ecs_task.*.json)
   permissions_boundary = var.permissions_boundary == "" ? null : var.permissions_boundary
   tags                 = var.tags
@@ -105,7 +105,7 @@ data "aws_iam_policy_document" "ecs_service" {
 
 resource "aws_iam_role" "ecs_service" {
   count                = var.enabled && var.network_mode != "awsvpc" && length(var.task_role_arn) == 0 && length(var.task_exec_role_arn) == 0 ? 1 : 0
-  name                 = "${var.project}-${var.application}-${var.environment}"
+  name                 = "${var.project}-${var.application}-${var.environment}-ecs_service"
   assume_role_policy   = join("", data.aws_iam_policy_document.ecs_service.*.json)
   permissions_boundary = var.permissions_boundary == "" ? null : var.permissions_boundary
   tags                 = var.tags
@@ -153,7 +153,7 @@ data "aws_iam_policy_document" "ecs_task_exec" {
 
 resource "aws_iam_role" "ecs_exec" {
   count                = var.enabled && length(var.task_exec_role_arn) == 0 ? 1 : 0
-  name                 = "${var.project}-${var.application}-${var.environment}"
+  name                 = "${var.project}-${var.application}-${var.environment}-ecs_exec"
   assume_role_policy   = join("", data.aws_iam_policy_document.ecs_task_exec.*.json)
   permissions_boundary = var.permissions_boundary == "" ? null : var.permissions_boundary
   tags                 = var.tags
